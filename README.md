@@ -1,7 +1,7 @@
 PhpTus
 ======
 
-Library for [tus server](http://www.tus.io/)
+Library for [tus server](http://www.tus.io/) (tus protocol 0.2.1)
 
 Installation
 ------------

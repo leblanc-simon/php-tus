@@ -42,7 +42,7 @@ class Client
      * @param       string      $filename       The filename to upload
      * @param       string      $end_point      The end point where you upload the file
      * @param       string      $fingerprint    The fingerprint of the upload
-     * @exception   \PhpTus\Exception\Required  if curl extension isn't loaded
+     * @throws      \PhpTus\Exception\Required  if curl extension isn't loaded
      * @access      public
      */
     public function __construct($filename = null, $end_point = null, $fingerprint = null)
@@ -113,9 +113,9 @@ class Client
      *
      * @param       string      $filename       The filename to upload
      * @return      \PhpTus\Client              The current Client instance
-     * @exception   \InvalidArgumentException   if filename isn't a string
-     * @exception   \PhpTus\Exception\File      if the filename doesn't exist
-     * @exception   \PhpTus\Exception\File      if it's impossible to get filesize
+     * @throws      \InvalidArgumentException   if filename isn't a string
+     * @throws      \PhpTus\Exception\File      if the filename doesn't exist
+     * @throws      \PhpTus\Exception\File      if it's impossible to get filesize
      * @access      public
      */
     public function setFilename($filename)
@@ -158,7 +158,7 @@ class Client
      *
      * @param       string      $end_point      The end point where to upload file
      * @return      \PhpTus\Client              The current Client instance
-     * @exception   \InvalidArgumentException   if end point isn't a string
+     * @throws      \InvalidArgumentException   if end point isn't a string
      * @access      public
      */
     public function setEndPoint($end_point)
@@ -190,7 +190,7 @@ class Client
      *
      * @param       string      $fingerprint    The fingerprint to use for resume upload
      * @return      \PhpTus\Client              The current Client instance
-     * @exception   \InvalidArgumentException   if fingerprint isn't a string or null
+     * @throws      \InvalidArgumentException   if fingerprint isn't a string or null
      * @access      public
      */
     public function setFingerprint($fingerprint)
@@ -209,10 +209,10 @@ class Client
      * Call the POST request to initialize the upload
      *
      * @return      array                       The array with the header's informations of the response
-     * @exception   \DomainException            If the end-point isn't define
-     * @exception   \DomainException            If the filesize isn't define
-     * @exception   \PhpTus\Exception\Curl      If the curl request fail
-     * @exception   \PhpTus\Exception\BadHeader If the response return an unexcepted HTTP Code
+     * @throws      \DomainException            If the end-point isn't define
+     * @throws      \DomainException            If the filesize isn't define
+     * @throws      \PhpTus\Exception\Curl      If the curl request fail
+     * @throws      \PhpTus\Exception\BadHeader If the response return an unexcepted HTTP Code
      * @access      private
      */
     private function getPost()
@@ -301,9 +301,9 @@ class Client
      * Call the HEAD request to get the current status of the upload
      *
      * @return      array                       The array with the header's informations of the response
-     * @exception   \DomainException            If the location isn't define
-     * @exception   \PhpTus\Exception\Curl      If the curl request fail
-     * @exception   \PhpTus\Exception\BadHeader If the response return an unexcepted HTTP Code
+     * @throws      \DomainException            If the location isn't define
+     * @throws      \PhpTus\Exception\Curl      If the curl request fail
+     * @throws      \PhpTus\Exception\BadHeader If the response return an unexcepted HTTP Code
      * @access      private
      */
     private function getHead()
@@ -379,14 +379,14 @@ class Client
      * Call the PATCH request to upload the file
      *
      * @return      array                       The array with the header's informations of the response
-     * @exception   \DomainException            If the location isn't define
-     * @exception   \DomainException            If the filename isn't define
-     * @exception   \DomainException            If the length isn't define
-     * @exception   \DomainException            If the current_offset isn't define
-     * @exception   \PhpTus\Exception\File      If it's impossible to read the file
-     * @exception   \PhpTus\Exception\File      If it's impossible to move the pointer of the position in the file
-     * @exception   \PhpTus\Exception\Curl      If the curl request fail
-     * @exception   \PhpTus\Exception\BadHeader If the response return an unexcepted HTTP Code
+     * @throws      \DomainException            If the location isn't define
+     * @throws      \DomainException            If the filename isn't define
+     * @throws      \DomainException            If the length isn't define
+     * @throws      \DomainException            If the current_offset isn't define
+     * @throws      \PhpTus\Exception\File      If it's impossible to read the file
+     * @throws      \PhpTus\Exception\File      If it's impossible to move the pointer of the position in the file
+     * @throws      \PhpTus\Exception\Curl      If the curl request fail
+     * @throws      \PhpTus\Exception\BadHeader If the response return an unexcepted HTTP Code
      * @access      private
      */
     private function patch()

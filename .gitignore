@@ -1,3 +1,4 @@
 vendor
 test/data/file-to-upload
+test/data/server
 composer.lock

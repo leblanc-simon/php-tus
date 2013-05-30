@@ -219,6 +219,15 @@ class Server
     /**
      * Process the PATCH request
      *
+     * @throws  \Exception                      If the uuid isn't know
+     * @throws  \PhpTus\Exception\BadHeader     If the Offset header isn't a positive integer
+     * @throws  \PhpTus\Exception\BadHeader     If the Content-Length header isn't a positive integer
+     * @throws  \PhpTus\Exception\BadHeader     If the Content-Type header isn't "application/offset+octet-stream"
+     * @throws  \PhpTus\Exception\BadHeader     If the Offset header and Offset Redis are not equal
+     * @throws  \PhpTus\Exception\Required      If the final length is smaller than offset
+     * @throws  \PhpTus\Exception\File          If it's impossible to open php://input
+     * @throws  \PhpTus\Exception\File          If it's impossible to open the destination file
+     * @throws  \PhpTus\Exception\File          If it's impossible to set the position in the destination file
      */
     private function processPatch()
     {
@@ -253,7 +262,13 @@ class Server
             throw new Exception\BadHeader('Offset header isn\'t the same as in Redis');
         }
         if ($max_length === null || (int)$offset_redis > (int)$max_length) {
-            throw new Exception\BadHeader('');
+            throw new Exception\Required('Final-Length is required and must be greather than Offset');
+        }
+
+        // Check if the file isn't already entirely write
+        if ((int)$offset_redis === (int)$max_length) {
+            $this->response = new Response(null, 200);
+            return;
         }
 
         // Read / Write datas

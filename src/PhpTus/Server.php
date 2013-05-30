@@ -17,6 +17,8 @@ use Predis\Client as PredisClient;
 
 class Server
 {
+    const TIMEOUT = 30;
+
     const POST  = 'POST';
     const HEAD  = 'HEAD';
     const PATCH = 'PATCH';
@@ -217,32 +219,122 @@ class Server
     /**
      * Process the PATCH request
      *
-     *
      */
     private function processPatch()
     {
+        // Check the uuid
         if ($this->existsInRedis($this->uuid) === false) {
             throw new \Exception('The UUID doesn\'t exists');
         }
 
-        $headers = $this->extractHeaders(array('Offset', 'Content-Type'));
+        // Check HTTP headers
+        $headers = $this->extractHeaders(array('Offset', 'Content-Length', 'Content-Type'));
 
         if (is_numeric($headers['Offset']) === false || $headers['Offset'] < 0) {
             throw new Exception\BadHeader('Offset must be a positive integer');
+        }
+
+        if (is_numeric($headers['Content-Length']) === false || $headers['Content-Length'] < 0) {
+            throw new Exception\BadHeader('Content-Length must be a positive integer');
         }
 
         if (is_string($headers['Content-Type']) === false || $headers['Content-Type'] !== 'application/offset+octet-stream') {
             throw new Exception\BadHeader('Content-Type must be "application/offset+octet-stream"');
         }
 
+        // Initialize vars
         $offset_header = (int)$headers['Offset'];
         $offset_redis = $this->getInRedis($this->uuid, 'Offset');
+        $max_length = $this->getInRedis($this->uuid, 'Final-Length');
+        $content_length = (int)$headers['Content-Length'];
+
+        // Check consistency (user vars vs database vars)
         if ($offset_redis === null || (int)$offset_redis !== $offset_header) {
             throw new Exception\BadHeader('Offset header isn\'t the same as in Redis');
         }
+        if ($max_length === null || (int)$offset_redis > (int)$max_length) {
+            throw new Exception\BadHeader('');
+        }
 
-        $content = $this->getRequest()->getContent();
+        // Read / Write datas
+        $handle_input = fopen('php://input', 'rb');
+        if ($handle_input === false) {
+            throw new Exception\File('Impossible to open php://input');
+        }
 
+        $file = $this->directory.$this->getFilename();
+        $handle_output = fopen($file, 'ab');
+        if ($handle_output === false) {
+            throw new Exception\File('Impossible to open file to write into');
+        }
+
+        if (fseek($handle_output, (int)$offset_redis) === false) {
+            throw new Exception\File('Impossible to move pointer in the good position');
+        }
+
+        ignore_user_abort(true);
+
+        $current_size = (int)$offset_redis;
+        $total_write = 0;
+
+        try {
+            while (true) {
+                set_time_limit(self::TIMEOUT);
+
+                // Manage user abort
+                if(connection_status() != CONNECTION_NORMAL) {
+                    throw new Exception\Abort('User abort connexion');
+                }
+            
+                $data = fread($handle_input, 8192);
+                if ($data === false) {
+                    throw new Exception\File('Impossible to read the datas');
+                }
+
+                $size_read = strlen($data);
+
+                // If user sent more datas than expected (by POST Final-Length), abort
+                if ($size_read + $current_size > $max_length) {
+                    throw new Exception\Max('Size sent is greather than max length expected');
+                }
+
+
+                // If user sent more datas than expected (by PATCH Content-Length), abort
+                if ($size_read + $total_write > $content_length) {
+                    throw new Exception\Max('Size sent is greather than max length expected');
+                }
+
+                // Write datas
+                $size_write = fwrite($handle_output, $data);
+                if ($size_write === false) {
+                    throw new Exception\File('Impossible to write the datas');
+                }
+
+                $current_size += $size_write;
+                $total_write += $size_write;
+                $this->setInRedis($this->uuid, 'Offset', $current_size);
+
+                if ($total_write === $content_length) {
+                    fclose($handle_input);
+                    fclose($handle_output);
+                    break;
+                }
+            }
+        } catch (Exception\Max $e) {
+            fclose($handle_input);
+            fclose($handle_output);
+            $this->response = new Response(null, 400);
+        } catch (Exception\File $e) {
+            fclose($handle_input);
+            fclose($handle_output);
+            $this->response = new Response(null, 500);
+        } catch (Exception\Abort $e) {
+            fclose($handle_input);
+            fclose($handle_output);
+            $this->response = new Response(null, 100);
+        }
+
+        $this->response = new Response(null, 200);
     }
 
 

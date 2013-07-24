@@ -1,6 +1,7 @@
 {
     "name": "leblanc-simon/php-tus",
     "version": "1.0",
+    "description": "PHP Library for tus protocol (client and server)",
     "authors": [{
         "name": "Simon Leblanc",
         "email": "contact@leblanc-simon.eu",

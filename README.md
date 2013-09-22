@@ -53,6 +53,15 @@ $server = new \PhpTus\Server(__DIR__.'/path-to-save-file',
 $server->process(true);
 ```
 
+If you are with an Apache server, add an .htaccess file to redirect all request in the php page (without that, your PATCH call failed), like :
+
+```bash
+RewriteEngine on
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ index.php [QSA,L]
+```
+
 
 Author
 ------

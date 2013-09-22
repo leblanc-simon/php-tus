@@ -19,9 +19,11 @@ class Server
 {
     const TIMEOUT = 30;
 
-    const POST  = 'POST';
-    const HEAD  = 'HEAD';
-    const PATCH = 'PATCH';
+    const POST      = 'POST';
+    const HEAD      = 'HEAD';
+    const PATCH     = 'PATCH';
+    const OPTIONS   = 'OPTIONS';
+    const GET       = 'GET';
 
     private $uuid       = null;
     private $directory  = null;
@@ -70,7 +72,9 @@ class Server
         try {
             $method = $this->getRequest()->getMethod();
 
-            if ($method === self::POST) {
+            if ($method === self::OPTIONS) {
+                $this->uuid = null;
+            } elseif ($method === self::POST) {
                 $this->buildUuid();
             } else {
                 $this->getUserUuid();
@@ -89,9 +93,19 @@ class Server
                     $this->processPatch();
                     break;
 
+                case self::OPTIONS:
+                    $this->processOptions();
+                    break;
+
+                case self::GET:
+                    $this->processGet($send);
+                    break;
+
                 default:
-                    throw new Exception\Request('Invalid method', 501);
+                    throw new Exception\Request('The requested method '.$method.' is not allowed', 405);
             }
+
+            $this->addCommonHeader();
 
             if ($send === false) {
                 return $this->response;
@@ -102,12 +116,21 @@ class Server
             }
 
             $this->response = new Response(null, 400);
+            $this->addCommonHeader();
+        } catch (Exception\Request $e) {
+            if ($send === false) {
+                throw $e;
+            }
+
+            $this->response = new Response($e->getMessage(), $e->getCode());
+            $this->addCommonHeader();
         } catch (\Exception $e) {
             if ($send === false) {
                 throw $e;
             }
 
             $this->response = new Response(null, 500);
+            $this->addCommonHeader();
         }
 
         $this->response->sendHeaders();
@@ -350,6 +373,64 @@ class Server
         }
 
         $this->response = new Response(null, 200);
+    }
+
+
+    /**
+     * Process the OPTIONS request
+     *
+     * @access  private
+     */
+    private function processOptions()
+    {
+        $this->response = new Response(null, 200);
+    }
+
+
+    /**
+     * Process the GET request
+     *
+     * @access  private
+     */
+    private function processGet($send)
+    {
+        $file = $this->directory.$this->getFilename();
+
+        if (file_exists($file) === false || is_readable($file) === false) {
+            throw new Exception\Request('The file '.$this->uuid.' doesn\'t exist', 404);
+        }
+
+        $this->response = new Response(null, 200);
+        $this->addCommonHeader();
+
+        $this->response->headers->set('Content-Type', 'application/force-download', true);
+        $this->response->headers->set('Content-disposition', 'attachment; filename="'.str_replace('"', '', basename($this->uuid)).'"', true);
+        $this->response->headers->set('Content-Transfer-Encoding', 'application/octet-stream', true);
+        $this->response->headers->set('Pragma', 'no-cache', true);
+        $this->response->headers->set('Cache-Control', 'must-revalidate, post-check=0, pre-check=0, public', true);
+        $this->response->headers->set('Expires', '0', true);
+
+        if ($send === true) {
+            $this->response->sendHeaders();
+
+            readfile($file);
+            exit;
+        }
+    }
+
+
+    /**
+     * Add the commons headers to the HTTP response
+     *
+     * @access  private
+     */
+    private function addCommonHeader()
+    {
+        $this->response->headers->set('Allow', 'OPTIONS,GET,HEAD,POST,PATCH', true);
+        $this->response->headers->set('Access-Control-Allow-Methods', 'OPTIONS,GET,HEAD,POST,PATCH', true);
+        $this->response->headers->set('Access-Control-Allow-Origin', '*', true);
+        $this->response->headers->set('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Final-Length, Offset', true);
+        $this->response->headers->set('Access-Control-Expose-Headers', 'Location, Range, Content-Disposition, Offset', true);
     }
 
 

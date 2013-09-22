@@ -8,11 +8,10 @@ Installation
 
 use [composer](http://getcomposer.org/)
 
-Usage
------
+Client Usage
+------------
 
 ```php
-<?php
 $client = new PhpTus\Client();
 $client->setFilename('/path/of/the/file/to/upload');
 $client->setEndPoint('http://example.com/files/');
@@ -37,6 +36,29 @@ $client->upload(2048);
 // Upload the remaining of your file
 $client->upload();
 ```
+
+Server Usage
+------------
+
+*Require* : redis-server (on Debian/Ubuntu, apt-get install redis-server)
+
+```php
+// Create and configure server
+$server = new \PhpTus\Server(__DIR__.'/path-to-save-file', 
+                            '/url-to-call/', 
+                            array('prefix' => 'php-tus')
+);
+
+// Run server
+$server->process(true);
+```
+
+
+Author
+------
+
+Simon Leblanc <contact@leblanc-simon.eu>
+
 
 License
 -------

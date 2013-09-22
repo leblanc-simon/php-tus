@@ -134,6 +134,8 @@ class Server
         }
 
         $this->response->sendHeaders();
+        
+        // The process must only sent the HTTP headers : kill request after send
         exit;
     }
 

@@ -1,3 +1,6 @@
+**This repository is archived. See [tus-php](https://github.com/ankitpokhrel/tus-php) if yout want a good alternative.**
+
+
 PhpTus
 ======
 
